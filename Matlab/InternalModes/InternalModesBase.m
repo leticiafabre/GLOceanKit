@@ -90,7 +90,7 @@ classdef (Abstract) InternalModesBase < handle
         end
         
         function set.upperBoundary(self,upperBoundary)
-            if  upperBoundary ~= UpperBoundary.rigidLid && upperBoundary ~= UpperBoundary.freeSurface
+            if  upperBoundary ~= UpperBoundary.rigidLid && upperBoundary ~= UpperBoundary.freeSurface && upperBoundary ~= UpperBoundary.open
                 error('Invalid upper boundary condition!')
             else
                 self.upperBoundary = upperBoundary;

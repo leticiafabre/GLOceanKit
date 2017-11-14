@@ -161,6 +161,9 @@ classdef InternalModesSpectral < InternalModesBase
             elseif self.upperBoundary == UpperBoundary.rigidLid
                 A(1,:) = T(1,:);
                 B(1,:) = 0;
+            elseif self.upperBoundary == UpperBoundary.open
+                A(1,:) = Tz(1,:);
+                B(1,:) = 0.0002*T(1,:);
             end
             
             [F,G,h] = self.ModesFromGEPSpectral(A,B);
@@ -322,6 +325,8 @@ classdef InternalModesSpectral < InternalModesBase
                 error('EVP setup fail. Found at least one nan in matrices A and B.\n');
             end
             [V,D] = eig( A, B );
+            
+%             lambda = hFromLambda(diag(D));
             
             [h, permutation] = sort(real(hFromLambda(diag(D))),'descend');
             G_cheb=V(:,permutation);

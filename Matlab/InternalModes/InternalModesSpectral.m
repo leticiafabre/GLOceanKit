@@ -163,7 +163,8 @@ classdef InternalModesSpectral < InternalModesBase
                 B(1,:) = 0;
             elseif self.upperBoundary == UpperBoundary.open
                 A(1,:) = Tz(1,:);
-                B(1,:) = 0.0002*T(1,:);
+                B(1,:) = (6e-4)*T(1,:);
+%                 B(1,:) = 2*T(1,:)+1400;
             end
             
             [F,G,h] = self.ModesFromGEPSpectral(A,B);

@@ -29,6 +29,15 @@ figure, pcolor(wvt.x,wvt.y,wvt.ssh.'), shading interp
 % initialize the integrator with the model
 model = WVModel(wvt,nonlinearFlux=SingleModeQGPVE(wvt,shouldUseBeta=1,u_damp=wvt.uMax));
 
+if model.nonlinearFluxOperation.beta > 0
+    beta = 2 * 7.2921E-5 * cos( wvt.latitude*pi/180. ) / 6.371e6;
+    outputVar = WVVariableAnnotation('qgpv',{'x','y','z'},'1/s', 'quasigeostrophic potential vorticity');
+    f = @(wvt) -wvt.transformToSpatialDomainWithF( (wvt.Omega .* wvt.Omega ./ (wvt.h * wvt.f)) .*wvt.A0t) + beta*wvt.Y;
+    wvt.addOperation(WVOperation('qgpv',outputVar,f),overwriteExisting=1);
+    f = @(wvt) wvt.diffX(wvt.v) - wvt.diffY(wvt.u) - (wvt.f)^2/(wvt.h * wvt.g)*wvt.psi + beta*wvt.Y;
+end
+
+
 % set initial positions for a bunch of floats
 [xFloat,yFloat] = ndgrid(wvt.x(1:2:end),wvt.y(1:2:end));
 xFloat = reshape(xFloat,1,[]);
@@ -62,5 +71,17 @@ plot(xFloatT/1000,yFloatT/1000), axis equal
 xlim([min(wvt.x) max(wvt.x)]/1000),ylim([min(wvt.y) max(wvt.y)]/1000)
 packfig(2,1,'rows')
 % print('monopolefigure.png','-dpng','-r300')
+
+%%
+[~,index] = max(std(qgpvFloatT,0,1));
+
+figure
+tiledlayout(2,1)
+nexttile
+plot(t/86400,qgpvFloatT(:,index)/wvt.f);
+ylabel('qgpv (f_0)')
+xlabel('time (days)')
+nexttile
+plot(xFloatT(:,index)/1000,yFloatT(:,index)/1000)
 
 

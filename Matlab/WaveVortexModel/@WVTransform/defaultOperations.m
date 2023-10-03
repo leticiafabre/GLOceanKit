@@ -84,7 +84,7 @@ transformVar.isVariableWithLinearTimeStep = 0;
 transformVar.isVariableWithNonlinearTimeStep = 1;
 operations(end+1) = WVOperation('geostrophicEnergyBarotropic',transformVar,@(wvt) wvt.geostrophicEnergyBarotropic);
 
-transformVar = WVVariableAnnotation('geostrophicEnergy',{},'m3/s2', 'total energy, inertial oscillations');
+transformVar = WVVariableAnnotation('geostrophicEnergy',{},'m3/s2', 'total energy, geostrophic');
 transformVar.isVariableWithLinearTimeStep = 0;
 transformVar.isVariableWithNonlinearTimeStep = 1;
 operations(end+1) = WVOperation('geostrophicEnergy', transformVar,@(wvt) wvt.geostrophicEnergy);
@@ -146,7 +146,7 @@ f = @(wvt) reshape(wvt.rhobar,1,1,[]) + wvt.rho_prime;
 operations(end+1) = WVOperation('rho_total',outputVar,f);
 
 outputVar = WVVariableAnnotation('qgpv',{'x','y','z'},'1/s', 'quasigeostrophic potential vorticity');
-f = @(wvt) -wvt.transformToSpatialDomainWithF( (wvt.Omega .* wvt.Omega ./ (wvt.h * wvt.f)) .*wvt.A0t);
+f = @(wvt) wvt.transformToSpatialDomainWithF( wvt.A0_QGPV_factor .*wvt.A0t);
 operations(end+1) = WVOperation('qgpv',outputVar,f);
 
 outputVar = WVVariableAnnotation('seaSurfaceU',{'x','y'},'m/s', 'x-component of the fluid velocity at the surface');

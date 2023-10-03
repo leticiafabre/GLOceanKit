@@ -3,7 +3,7 @@ layout: default
 title: addGeostrophicStreamfunction
 parent: WVTransform
 grand_parent: Classes
-nav_order: 60
+nav_order: 59
 mathjax: true
 ---
 
@@ -23,7 +23,8 @@ add a geostrophic streamfunction to existing geostrophic motions
 
 ## Discussion
 
-  The geostrophic streamfunction, $\psi$, is defined such that
+  The geostrophic streamfunction, $$\psi$$, is defined such that
+ 
   $$
   u= - \frac{\partial \psi}{\partial y}
   $$
@@ -33,7 +34,7 @@ add a geostrophic streamfunction to existing geostrophic motions
   $$
   
   $$
-  N^2 \eta = - f \frac{\partial \psi}{\partial z}
+  N^2 \eta = \frac{g}{\rho_0} \rho = - f \frac{\partial \psi}{\partial z}
   $$
  
   The geostrophic streamfunction is added to the existing values in `A0`

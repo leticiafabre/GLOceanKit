@@ -9,7 +9,7 @@ mathjax: true
 
 #  geostrophicEnergy
 
-total energy, inertial oscillations
+total energy, geostrophic
 
 
 ---

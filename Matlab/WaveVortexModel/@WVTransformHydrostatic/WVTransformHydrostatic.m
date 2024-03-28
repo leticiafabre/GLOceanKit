@@ -182,7 +182,12 @@ classdef WVTransformHydrostatic < WVTransform
             self.addPropertyAnnotations(WVPropertyAnnotation('P',{'j'},'','Preconditioner for F, size(P)=[1 Nj]. F*u = uhat, (PF)*u = P*uhat, so ubar==P*uhat'));
             self.addPropertyAnnotations(WVPropertyAnnotation('Q',{'j'},'','Preconditioner for G, size(Q)=[1 Nj]. G*eta = etahat, (QG)*eta = Q*etahat, so etabar==Q*etahat. '));
 
-            self.nonlinearFluxOperation = Boussinesq(self);
+            outputVar = WVVariableAnnotation('zeta_z',{'x','y','z'},'1/s^2', 'vertical component of relative vorticity');
+            outputVar.attributes('short_name') = 'ocean_relative_vorticity';
+            f = @(wvt) wvt.diffX(wvt.v) - wvt.diffY(wvt.u);
+            self.addOperation(WVOperation('zeta_z',outputVar,f));
+
+            self.nonlinearFluxOperation = WVNonlinearFlux(self);
         end
 
         function wvtX2 = waveVortexTransformWithResolution(self,m)
@@ -316,19 +321,10 @@ classdef WVTransformHydrostatic < WVTransform
                                 
         u_z = diffZF(self,u,n);
         w_z = diffZG(self,w,n);
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %
-        % Nonlinear Flux
-        %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        function [Fp,Fm,F0] = nonlinearFlux(self)
-            uNL = self.u .* self.diffX(self.u)   + self.v .* self.diffY(self.u)   + self.w .*  self.diffZF(self.u);
-            vNL = self.u .* self.diffX(self.v)   + self.v .* self.diffY(self.v)   + self.w .*  self.diffZF(self.v);
-            nNL = self.u .* self.diffX(self.eta) + self.v .* self.diffY(self.eta) + self.w .* (self.diffZG(self.eta) + self.eta .* self.dLnN2);
-            [Fp,Fm,F0] = wvt.transformUVEtaToWaveVortex(uNL,vNL,nNL,self.t);
-        end
+        Finv = FinvMatrix(self);
+        Ginv = GinvMatrix(self);
+        F = FMatrix(self);
+        G = GMatrix(self);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %
@@ -357,18 +353,16 @@ classdef WVTransformHydrostatic < WVTransform
 
         function value = get.A0_QGPV_factor(self)
             Kh = self.Kh;
-            Lr2 = self.g*(self.h)/(self.f*self.f);
-            Lr2(1) = self.g*self.Lz/(self.f*self.f);
-            value = -(self.g/self.f) * ( (self.Kh).^2 + Lr2.^(-1) );
-            value(:,:,1) = -(self.g/self.f) * (Kh(:,:,1)).^2;
+            value = -(self.g/self.f) * Kh.^2 - self.f ./ self.h; % valid for geostrophic and mda modes
+            value(:,:,1) = -(self.g/self.f) * (Kh(:,:,1)).^2; % valid for the vortical mode
         end
 
         function value = get.A0_TZ_factor(self)
             Kh = self.Kh;
             Lr2 = self.g*(self.h)/(self.f*self.f);
-            Lr2(1) = self.g*self.Lz/(self.f*self.f);
-            value = (self.g/2) * Lr2 .* ( (self.Kh).^2 + Lr2.^(-1) ).^2;
-            value(:,:,1) = (self.g/2) * Lr2(1) .* (Kh(:,:,1)).^4;
+            value = (self.g/2) * Lr2 .* ( (self.Kh).^2 + Lr2.^(-1) ).^2; % valid for geostrophic and mda modes
+            L02 = self.g*self.Lz/(self.f*self.f);
+            value(:,:,1) = (self.g/2) * L02 .* (Kh(:,:,1)).^4; % valid for the vortical mode
         end
           
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -491,7 +485,13 @@ classdef WVTransformHydrostatic < WVTransform
         
         function ratio = uMaxGNormRatioForWave(self,k0, l0, j0)
             ratio = 1/self.P(j0+1);
-        end   
+        end 
+
+        function ratio = uMaxA0(self,k0, l0, j0)
+            % uMax for a geostrophic mode is uMax =(g/f)*Kh*max(F_j)*abs(A0)
+            Kh = self.Kh;
+            ratio = (self.g/self.f)*Kh(k0,l0,j0)*self.P(j0);
+        end 
 
         [ncfile,matFilePath] = writeToFile(wvt,path,variables,options)
 
